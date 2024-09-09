@@ -1,115 +1,506 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Firebase Authentication</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
-    <script>
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBgeyh9k5b2KJ0QZU_S540dVyo20HSb9yQ",
-            authDomain: "marlet-5031d.firebaseapp.com",
-            databaseURL: "https://marlet-5031d-default-rtdb.firebaseio.com",
-            projectId: "marlet-5031d",
-            storageBucket: "marlet-5031d.appspot.com",
-            messagingSenderId: "354722804706",
-            appId: "1:354722804706:web:197610bb88cd61a7dfffbb",
-            measurementId: "G-1GPSRZB226"
-        };
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Users Data</title>
+  
+  <!-- Include Firebase JavaScript SDK (version 8.x) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
+  
 
-        let recaptchaVerifier;
-        let confirmationResult;
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+      background: url('') no-repeat center center fixed;
+      background-size: cover;
+    }
+    
+    h1 {
+      text-align: center;
+      margin-top: 10px;
+      color: white;
+      padding: 20px 0;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+    
+    .container {
+      max-width: 100%;
+      overflow-x: auto;
+      margin-top: 20px;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+    }
+    
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border: 1px solid #ccc;
+    }
+    
+    form {
+      max-width: 100%;
+      margin-top: 20px;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 8px;
+    }
+    
+    select {
+      width: calc(100% - 20px);
+      padding: 8px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    
+    #messages {      
+      background-color: #FFFFFF;
+      border: 1px solid #ddd;
+      height: 300px;
+      overflow-y: scroll;
+      margin-bottom: 10px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column-reverse; /* Reverse the order of messages */
+    }
+    
+    #serverMessage {
+      width: calc(100% - 110px);
+      padding: 10px;
+      margin-right: 10px;
+      box-sizing: border-box;
+    }
+    
+    button {
+      padding: 10px;
+      cursor: pointer;
+    }
+    
+    #messagesContainer, #UpdateU {
+      display: none; /* Hide both elements initially */
+    }
 
-        window.onload = function() {
-            recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-                'size': 'normal',
-                'callback': function(response) {
-                    console.log("reCAPTCHA verified");
-                },
-                'expired-callback': function() {
-                    console.log("reCAPTCHA expired");
-                }
-            });
-            recaptchaVerifier.render().then(function(widgetId) {
-                window.recaptchaWidgetId = widgetId;
-            });
-        };
+    button[type="submit"],
+    button[type="button"] {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      font-size: 16px;
+      box-sizing: border-box;
+      background-color: #4681f4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition-duration: 0.4s;
+    }
 
-        function phoneAuth() {
-            const phoneNumber = document.getElementById('phone').value;
-            const appVerifier = recaptchaVerifier;
+    textarea {
+      resize: vertical;
+    }
 
-            firebase.auth().signInWithPhoneNumber(phoneNumber, appVerifier)
-                .then((result) => {
-                    confirmationResult = result;
-                    alert('OTP sent to ' + phoneNumber);
-                }).catch((error) => {
-                    console.error("Error during phone auth: ", error);
-                    alert("Error during phone auth: " + error.message);
-                });
-        }
+    button[type="submit"]:hover,
+    button[type="button"]:hover {
+      background-color: #55c2da;
+      border: 2px solid #FFFFFF;
+    }
 
-        function verifyOTP() {
-            const code = document.getElementById('otp').value;
-            confirmationResult.confirm(code).then((result) => {
-                const user = result.user;
-                console.log("User signed in: ", user);
-                alert("Phone authentication successful!");
+    #stat, #UpdateUser {
+      background-color: #5dbea3;
+      border: none;
+      color: white;
+      padding: 12px 24px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 12px;
+      transition-duration: 0.4s;
+    }
 
-                // After successful authentication, enroll for MFA
-                enrollMFA(user);
-            }).catch((error) => {
-                console.error("Error verifying OTP: ", error);
-                alert("Failed to verify OTP: " + error.message);
-            });
-        }
+    #stat:hover, #UpdateUser:hover {
+      background-color: #5adbb5;
+      border: 2px solid #FFFFFF;
+    }
 
-        function enrollMFA(user) {
-            const phoneNumber = document.getElementById('phone').value;
-            const appVerifier = recaptchaVerifier;
-
-            const phoneAuthProvider = new firebase.auth.PhoneAuthProvider();
-            phoneAuthProvider.verifyPhoneNumber({
-                phoneNumber: phoneNumber,
-                session: confirmationResult.verificationId,
-            }, appVerifier).then((verificationId) => {
-                alert('MFA setup complete. Your verification ID is: ' + verificationId);
-            }).catch((error) => {
-                console.error("Error enrolling MFA: ", error);
-                alert("Error enrolling MFA: " + error.message);
-            });
-        }
-
-        function resetPassword() {
-            const email = document.getElementById('email').value;
-            firebase.auth().sendPasswordResetEmail(email).then(() => {
-                alert("Password reset email sent!");
-            }).catch((error) => {
-                console.error("Error sending password reset email: ", error);
-                alert("Error sending password reset email: " + error.message);
-            });
-        }
-    </script>
+    .error-message {
+      color: red;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
-    <h1>Firebase Authentication</h1>
+  <h1>Users Data</h1>
 
-    <div id="recaptcha-container"></div>
+  <button id="stat" onclick="toggleMessages()">Status</button>
+  <button id="UpdateUser" onclick="toggleUpdateU()">Update Users</button><br><br>
 
-    <h2>Phone Authentication</h2>
-    <input type="text" id="phone" placeholder="Enter phone number" />
-    <button onclick="phoneAuth()">Send OTP</button>
-    <input type="text" id="otp" placeholder="Enter OTP" />
-    <button onclick="verifyOTP()">Verify OTP</button>
+  <div id="messagesContainer">
+    <select id="identifierDropdown" aria-label="Select Identifier">
+      <option value="">Select an Identifier</option>
+    </select>
+    <div id="messages" aria-live="polite"></div>
+    <form id="messageForm" onsubmit="sendMessage(); return false;" aria-labelledby="messageForm">
+      <input type="text" id="serverMessage" placeholder="Type a message..." aria-label="Type your message here">
+      <button type="submit">Send Message</button>
+      <div id="error-message" class="error-message" aria-live="assertive"></div>
+    </form>
+  </div>
 
-    <h2>Reset Password</h2>
-    <input type="email" id="email" placeholder="Enter your email">
-    <button onclick="resetPassword()">Send Password Reset Email</button>
+  <div id="UpdateU">
+    <form id="UpdateUserForm">
+      <label for="email">Email:</label>
+      <input type="email" id="email" name="email" required>
+      <button type="submit">Update User</button>
+    </form>
+    <div id="message"></div>
+  </div>
+  
+  <!-- Select box for names -->
+  <div id="main">
+    <div class="container">
+      <form>
+        <label for="select-name">Select a Name:</label>
+        <select id="select-name" onchange="fetchUserData(this.value)" aria-label="Select a Name">
+          <option value="">Select a name...</option>
+        </select>
+      </form>
+    </div>
+
+    <!-- Table to display user data -->
+    <div class="container">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Car Maker</th>
+            <th>Car Model</th>
+            <th>Chassis Number</th>
+            <th>Problem</th>
+            <th>Year</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <!-- Data will be dynamically added here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+  <script>
+    // Function to hide elements on page load
+    function hideElementsOnLoad() {
+      document.getElementById('messagesContainer').style.display = 'none';
+      document.getElementById('UpdateU').style.display = 'none';
+      document.getElementById('main').style.display = 'block';
+    }
+
+    // Call the function when the window loads
+    window.onload = hideElementsOnLoad;
+
+    // Function to show the messages container and hide others
+    function toggleMessages() {
+      const messagesContainer = document.getElementById('messagesContainer');
+      const mainContent = document.getElementById('main');
+      const UpdateU = document.getElementById('UpdateU');
+
+      if (messagesContainer.style.display === 'none' || messagesContainer.style.display === '') {
+        messagesContainer.style.display = 'block';
+        mainContent.style.display = 'none';
+        UpdateU.style.display = 'none';
+      } else {
+        messagesContainer.style.display = 'none';
+        mainContent.style.display = 'block';
+        UpdateU.style.display = 'none';
+      }
+    }
+
+    // Function to show the Update Users container and hide others
+    function toggleUpdateU() {
+      const messagesContainer = document.getElementById('messagesContainer');
+      const mainContent = document.getElementById('main');
+      const UpdateU = document.getElementById('UpdateU');
+
+      if (UpdateU.style.display === 'none' || UpdateU.style.display === '') {
+        messagesContainer.style.display = 'none';
+        mainContent.style.display = 'none';
+        UpdateU.style.display = 'block';
+      } else {
+        messagesContainer.style.display = 'none';
+        mainContent.style.display = 'block';
+        UpdateU.style.display = 'none';
+      }
+    }
+
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBgeyh9k5b2KJ0QZU_S540dVyo20HSb9yQ",
+      authDomain: "marlet-5031d.firebaseapp.com",
+      databaseURL: "https://marlet-5031d-default-rtdb.firebaseio.com",
+      projectId: "marlet-5031d",
+      storageBucket: "marlet-5031d.appspot.com",
+      messagingSenderId: "354722804706",
+      appId: "1:354722804706:web:197610bb88cd61a7dfffbb",
+      measurementId: "G-1GPSRZB226"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+
+    // Initialize Firestore and Realtime Database
+    const db = firebase.firestore();
+    const realtimeDb = firebase.database();
+    const messagesRef = realtimeDb.ref('messages');
+
+    // Function to get download URL for background image
+    const storage = firebase.storage();
+    const storageRef = storage.ref('b1.jpg');
+
+    storageRef.getDownloadURL()
+      .then((url) => {
+        console.log('Download URL:', url);
+        document.body.style.backgroundImage = `url(${url})`;
+      })
+      .catch((error) => {
+        console.error('Error getting download URL:', error);
+      });
+
+    // Function to send a message to 'MARLET'
+    function sendMessageToMarlet(content) {
+        const messagesRef = realtimeDb.ref('messages');
+        
+        messagesRef.push({
+            message: content,
+            recipient: 'MARLET',
+            sender: 'System', // or you could use 'Admin' or another identifier
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        })
+        .then(() => {
+            console.log('Message sent to MARLET successfully.');
+        })
+        .catch(error => {
+            console.error('Error sending message to MARLET:', error);
+        });
+    }
+
+    // Function to send a message from server
+    function sendMessage() {
+      const messageContent = document.getElementById('serverMessage').value.trim();
+      const recipientDropdown = document.getElementById('identifierDropdown');
+      const recipient = recipientDropdown ? recipientDropdown.value : '';
+
+      if (messageContent && recipient) {
+        messagesRef.push({
+          message: messageContent,
+          recipient: recipient,
+          sender: 'MARLET',
+          timestamp: firebase.database.ServerValue.TIMESTAMP
+        })
+        .then(() => {
+          document.getElementById('serverMessage').value = '';
+          document.getElementById('error-message').textContent = '';
+        })
+        .catch(error => {
+          console.error('Error sending message:', error);
+          document.getElementById('error-message').textContent = 'Error sending message: ' + error.message;
+        });
+      } else {
+        document.getElementById('error-message').textContent = 'Message is empty or no recipient selected';
+      }
+    }
+
+    // Listen for incoming messages
+    messagesRef.on('child_added', function(snapshot) {
+      const messageData = snapshot.val();
+      displayMessage(messageData.sender, messageData.message, messageData.recipient, messageData.timestamp);
+    });
+
+    // Function to escape HTML characters to prevent XSS attacks
+    function escapeHTML(str) {
+      var div = document.createElement('div');
+      div.appendChild(document.createTextNode(str));
+      return div.innerHTML;
+    }
+
+    // Function to display a message in the UI
+    function displayMessage(sender, message, recipient, timestamp) {
+      const safeSender = escapeHTML(sender);
+      const safeMessage = escapeHTML(message);
+      const safeRecipient = escapeHTML(recipient);
+      
+      const formattedTime = new Date(timestamp).toLocaleTimeString();
+
+      const messageDisplay = document.createElement('div');
+      messageDisplay.innerHTML = 
+        `<strong>${safeSender}</strong> to <strong>${safeRecipient}</strong>: <em>(${formattedTime})</em><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;${safeMessage}`;
+      
+      const messagesContainer = document.getElementById('messages');
+      if (messagesContainer) {
+        messagesContainer.insertBefore(messageDisplay, messagesContainer.firstChild);
+        messagesContainer.scrollTop = 0;
+      } else {
+        console.error("Messages container not found");
+      }
+    }
+
+    // Function to populate dropdown with user identifiers in real-time
+    function listenForUserIdentifiers() {
+      const dropdown = document.getElementById('identifierDropdown');
+      console.log('Listening for user identifiers...');
+
+      db.collection('users').onSnapshot((snapshot) => {
+        console.log('Snapshot data:', snapshot.docs);
+
+        dropdown.innerHTML = '<option value="">Select an Identifier</option>'; 
+
+        snapshot.forEach((doc) => {
+          const userId = doc.id;
+          const userData = doc.data();
+          const email = userData.email || userId;
+
+          const username = email.split('@')[0];
+
+          const option = document.createElement('option');
+          option.value = userId;
+          option.textContent = username;
+          dropdown.appendChild(option);
+        });
+      }, (error) => {
+        console.error('Error fetching user identifiers:', error);
+        alert('Error fetching user identifiers: ' + error.message);
+      });
+    }
+
+    // Update user form submission handler
+    document.getElementById('UpdateUserForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+
+      const emailInput = document.getElementById('email');
+      const email = document.getElementById('email').value;
+      const messageDiv = document.getElementById('message');
+
+      try {
+        const response = await fetch('/Update-user', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email })
+        });
+
+        if (!response.ok) {
+          throw new Error('Network response was not ok.');
+        }
+
+        const result = await response.json();
+        alert('User update successful.');
+
+        emailInput.value = '';
+
+        sendMessageToMarlet(`User with email ${email} has been ${result.message.toLowerCase()}.`);
+
+      } catch (error) {
+        messageDiv.innerText = 'Error updating user';
+        console.error('Error:', error);
+
+        sendMessageToMarlet(`Error updating user with email ${email}: ${error.message}`);
+      }
+    });
+
+    // Function to fetch names and populate the select box
+    function populateNames() {
+      const usersRef = realtimeDb.ref('MARLET_AUTO_SPARE_PARTS/USERS');
+
+      usersRef.once('value')
+        .then(snapshot => {
+          const data = snapshot.val();
+          const selectBox = document.getElementById('select-name');
+          selectBox.innerHTML = '<option value="">Select a name...</option>';
+          
+          const uniqueNames = new Set(); // To keep track of unique names
+
+          for (const key in data) {
+            if (data.hasOwnProperty(key)) {
+              const userData = data[key];
+              const name = userData.NAME;
+
+              if (!uniqueNames.has(name)) {
+                uniqueNames.add(name);
+
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                selectBox.appendChild(option);
+              }
+            }
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching names:', error);
+          alert('Error fetching names: ' + error.message);
+        });
+    }
+
+    // Function to fetch and display user data based on selected name
+    function fetchUserData(name) {
+      if (!name) return;
+
+      const usersRef = realtimeDb.ref('MARLET_AUTO_SPARE_PARTS/USERS');
+      usersRef.orderByChild('NAME').equalTo(name).once('value')
+        .then(snapshot => {
+          const tableBody = document.getElementById('table-body');
+          tableBody.innerHTML = ''; // Clear the table before populating
+
+          snapshot.forEach(childSnapshot => {
+            const userData = childSnapshot.val();
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${userData.NAME}</td>
+              <td>${userData.CAR_MAKER}</td>
+              <td>${userData.CAR_MODEL}</td>
+              <td>${userData.CHASSIS_NUMBER}</td>
+              <td>${userData.PROBLEM}</td>
+              <td>${userData.YEAR}</td>
+              <td>${userData.Status}</td>
+            `;
+            tableBody.appendChild(row);
+          });
+        })
+        .catch(error => {
+          console.error('Error fetching user data:', error);
+          alert('Error fetching user data: ' + error.message);
+        });
+    }
+
+    // Call functions to populate names and listen for user identifiers
+    populateNames();
+    listenForUserIdentifiers();
+  </script>
 </body>
 </html>
